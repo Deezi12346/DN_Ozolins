@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Token Dashboard (Sepolia)</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+    h1 { margin-bottom: .25rem; }
+    .sub { color: #666; margin-top: 0; }
+    button { padding: .6rem 1rem; font-size: 1rem; cursor: pointer; }
+    input, select { width: 100%; padding: .5rem; font-size: 1rem; box-sizing: border-box; margin: .25rem 0 .75rem; }
+    label { font-weight: 600; }
+    .warn { background: #fff3cd; color: #664d03; border: 1px solid #ffecb5; padding: .75rem; border-radius: 6px; margin: 1rem 0; }
+    .status { margin-top: 1rem; padding: .75rem; border-radius: 6px; }
+    .status.info { background: #e7f1ff; color: #084298; }
+    .status.ok { background: #d1e7dd; color: #0a3622; }
+    .status.error { background: #f8d7da; color: #58151c; }
+    .status:empty { display: none; }
+    code { word-break: break-all; }
+    ul { padding-left: 1.2rem; }
+  </style>
+</head>
+<body>
+  <h1>Token Dashboard</h1>
+  <p class="sub">Ethereum Sepolia testnet only. Tokens have no real value.</p>
+
+  <div class="warn">Use a dedicated test wallet on <strong>Sepolia (chain ID 11155111)</strong>. Never enter a seed phrase or private key on this page.</div>
+  <div id="netWarning" class="warn" hidden>Wrong network. Please switch MetaMask to Ethereum Sepolia.</div>
+
+  <button id="connectBtn">Connect Wallet</button>
+  <p>Wallet: <code id="account">not connected</code></p>
+
+  <div id="app" hidden>
+    <h2>Balances</h2>
+    <ul id="balances"></ul>
+
+    <h2>Send tokens</h2>
+    <form id="sendForm">
+      <label for="tokenSelect">Token</label>
+      <select id="tokenSelect"></select>
+
+      <label for="recipient">Destination wallet</label>
+      <input id="recipient" placeholder="0x..." autocomplete="off" />
+
+      <label for="amount">Amount</label>
+      <input id="amount" inputmode="decimal" placeholder="e.g. 10" autocomplete="off" />
+
+      <button id="sendBtn" type="submit">Send</button>
+    </form>
+  </div>
+
+  <div id="status" class="status" role="status"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
