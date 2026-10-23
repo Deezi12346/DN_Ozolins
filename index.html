@@ -239,7 +239,7 @@
 
     <aside class="safety" aria-label="Testnet safety notice">
       <span aria-hidden="true">◆</span>
-      <div><strong>Sepolia testnet only.</strong> This dashboard blocks transfers on every other network. DN and STUDY are educational test assets with no guaranteed monetary value. Transfers require SepoliaETH for gas.</div>
+      <div><strong>Sepolia testnet only.</strong> This dashboard blocks transfers on every other network. DN and Study Points (SP) are educational test assets with no guaranteed monetary value. Transfers require SepoliaETH for gas.</div>
     </aside>
     <div id="networkWarning" class="chain-warning" role="alert">Wrong network. Switch your wallet to Ethereum Sepolia (chain ID 11155111) before using token balances or transfers.</div>
 
@@ -271,7 +271,7 @@
         <label for="recipient">Destination wallet</label>
         <input id="recipient" type="text" placeholder="0x..." autocomplete="off" spellcheck="false" inputmode="text" />
         <div class="field-heading">
-          <label for="amount">Amount</label>
+          <label id="amountLabel" for="amount">Amount</label>
           <span id="availableBalance" class="available">Available: —</span>
         </div>
         <div class="amount-wrap">
@@ -287,9 +287,9 @@
         <h2>About classroom tokens</h2>
         <ul>
           <li><strong>DN</strong> is for scarce, special achievements and premium rewards.</li>
-          <li><strong>STUDY</strong> is intended for everyday participation, quizzes, and attendance.</li>
+          <li><strong>Study Points (SP)</strong> is intended for everyday participation, quizzes, and attendance.</li>
           <li>Both are educational test tokens. ERC-20 balances and transfers are recorded on-chain.</li>
-          <li>Network gas is paid in SepoliaETH, not by sending DN or STUDY.</li>
+          <li>Network gas is paid in SepoliaETH, not by sending DN or SP.</li>
           <li>Confirmed token transfers may be irreversible. Check the destination and amount carefully.</li>
         </ul>
       </aside>

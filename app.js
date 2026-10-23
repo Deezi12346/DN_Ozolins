@@ -16,7 +16,7 @@ const TOKENS = [
   {
     id: "study",
     name: "Study Points",
-    symbol: "STUDY",
+    symbol: "SP",
     address: "0x60d73B9e259A544eC98f1dB5B0417003CE6Cf4f4",
     expectedSupply: 1_000_000n,
   },
@@ -106,7 +106,11 @@ function renderTokenCards() {
     balanceLabel.textContent = "Wallet balance";
     const balance = document.createElement("div");
     balance.className = "balance-value";
-    balance.textContent = state?.balance ?? (account ? "Loading…" : "Connect wallet");
+    balance.textContent = state?.balance !== undefined
+      ? `${state.balance} ${state.symbol}`
+      : account
+        ? "Loading…"
+        : "Connect wallet";
 
     const details = document.createElement("div");
     details.className = "token-details";
@@ -192,6 +196,7 @@ function updateTransferControls() {
   const state = token ? tokenStates.get(token.id) : null;
   const available = state?.balance ?? "—";
   $("availableBalance").textContent = `Available: ${available}${state?.symbol ? ` ${state.symbol}` : ""}`;
+  $("amountLabel").textContent = state?.symbol ? `Amount (${state.symbol})` : "Amount";
   $("symbolHint").textContent = state?.verified
     ? `Amount is denominated in ${state.symbol}.`
     : "Select a verified token to see its symbol and balance.";
@@ -428,10 +433,12 @@ async function sendTokens(event) {
   if (transactionPending) return;
 
   let submittedHash = null;
+  let transferSymbol = null;
   try {
     const token = selectedToken();
     const state = token ? tokenStates.get(token.id) : null;
     if (!token || !state?.verified) throw new Error("Choose a token that has passed Sepolia contract verification.");
+    transferSymbol = state.symbol;
 
     const recipient = $("recipient").value.trim();
     if (!recipient) throw new Error("Enter a destination wallet address.");
@@ -439,7 +446,7 @@ async function sendTokens(event) {
 
     const amount = parseTransferAmount($("amount").value, state.decimals);
     if (!signer || !provider || !account) throw new Error("Connect your wallet before sending tokens.");
-    setStatus("Checking network and token…", "info");
+    setStatus(`Checking network and ${state.symbol} token…`, "info");
     if (!(await getNetworkStatus())) {
       setNetworkStatus({ connected: true, onSepolia: false });
       throw new Error("Wrong network. Transfers are allowed only on Ethereum Sepolia.");
@@ -460,7 +467,7 @@ async function sendTokens(event) {
     }
     transactionPending = true;
     updateTransferControls();
-    setStatus("Awaiting MetaMask confirmation…", "info");
+    setStatus(`Awaiting MetaMask confirmation for ${state.symbol} transfer…`, "info");
 
     const signedContract = new ethers.Contract(token.address, ERC20_ABI, signerForSend);
     const transaction = await signedContract.transfer(ethers.getAddress(recipient), amount);
@@ -469,9 +476,9 @@ async function sendTokens(event) {
       href: `${ETHERSCAN_URL}/tx/${submittedHash}`,
       label: "View on Sepolia Etherscan ↗",
     };
-    setStatus("Transaction submitted.", "info", transactionLink);
+    setStatus(`${state.symbol} transfer submitted.`, "info", transactionLink);
     await new Promise((resolve) => window.setTimeout(resolve, 0));
-    setStatus("Waiting for confirmation…", "info", transactionLink);
+    setStatus(`Waiting for ${state.symbol} transfer confirmation…`, "info", transactionLink);
     const receipt = await transaction.wait();
     if (!receipt || receipt.status !== 1) {
       throw new Error("The transaction was mined but did not succeed.");
@@ -479,12 +486,12 @@ async function sendTokens(event) {
 
     const stillOnSepolia = await getNetworkStatus(currentProvider).catch(() => false);
     if (!stillOnSepolia) {
-      setStatus("A successful receipt was returned, but the wallet network changed during confirmation. Verify the transaction on Sepolia Etherscan.", "warning", {
+      setStatus(`The ${state.symbol} transfer receipt succeeded, but the wallet network changed during confirmation. Verify the transaction on Sepolia Etherscan.`, "warning", {
         href: `${ETHERSCAN_URL}/tx/${transaction.hash}`,
         label: "View transaction ↗",
       });
     } else {
-      setStatus("Transfer confirmed successfully on Sepolia.", "success", {
+      setStatus(`${state.symbol} transfer confirmed successfully on Sepolia.`, "success", {
         href: `${ETHERSCAN_URL}/tx/${transaction.hash}`,
         label: "View transaction ↗",
       });
@@ -495,7 +502,8 @@ async function sendTokens(event) {
     const result = error instanceof Error && !error.code
       ? { message: error.message, kind: "error" }
       : friendlyTransactionError(error);
-    setStatus(result.message, result.kind, submittedHash ? {
+    const message = transferSymbol ? `${transferSymbol} transfer: ${result.message}` : result.message;
+    setStatus(message, result.kind, submittedHash ? {
       href: `${ETHERSCAN_URL}/tx/${submittedHash}`,
       label: "Check transaction on Sepolia Etherscan ↗",
     } : null);
