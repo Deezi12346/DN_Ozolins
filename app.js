@@ -16,7 +16,7 @@ const TOKENS = [
   {
     id: "study",
     name: "Study Points",
-    symbol: "SP",
+    symbol: "STUDY",
     address: "0x60d73B9e259A544eC98f1dB5B0417003CE6Cf4f4",
     expectedSupply: 1_000_000n,
   },
@@ -95,7 +95,7 @@ function renderTokenCards() {
     verification.textContent = state?.verified
       ? "● Verified"
       : state?.error
-        ? "● Unavailable"
+        ? "● Verification failed"
         : account
           ? "● Checking"
           : "● Not checked";
@@ -228,6 +228,16 @@ function isRpcError(error) {
     || (typeof code === "number" && code <= -32000);
 }
 
+function errorMessage(error) {
+  const message = error?.shortMessage
+    ?? error?.reason
+    ?? error?.info?.error?.message
+    ?? error?.message;
+  return typeof message === "string" && message.trim()
+    ? message.trim().slice(0, 240)
+    : "No additional error details were provided.";
+}
+
 async function verifyToken(token, currentProvider, walletAddress) {
   if (!ethers.isAddress(token.address)) {
     return { error: "Configuration error: the contract address is missing or invalid." };
@@ -236,8 +246,8 @@ async function verifyToken(token, currentProvider, walletAddress) {
   let bytecode;
   try {
     bytecode = await currentProvider.getCode(token.address);
-  } catch {
-    return { error: "RPC error while checking contract code on Sepolia. Check your connection and retry." };
+  } catch (error) {
+    return { error: `RPC error while checking contract code on Sepolia: ${errorMessage(error)}` };
   }
   if (!bytecode || /^0x0*$/i.test(bytecode)) {
     return { error: "No contract code exists at this address on Sepolia." };
@@ -258,12 +268,8 @@ async function verifyToken(token, currentProvider, walletAddress) {
       contract.balanceOf(walletAddress),
     ]);
   } catch (error) {
-    if (isRpcError(error)) {
-      return { error: "RPC error while reading ERC-20 data on Sepolia. Check your connection and retry." };
-    }
-    return {
-      error: "ERC-20 read error: contract code exists, but metadata, total supply, or this wallet's balance could not be read.",
-    };
+    const type = isRpcError(error) ? "RPC error" : "ERC-20 read error";
+    return { error: `${type} while reading metadata, total supply, or this wallet's balance: ${errorMessage(error)}` };
   }
 
   const expectedRawSupply = token.expectedSupply * (10n ** BigInt(EXPECTED_DECIMALS));
@@ -320,8 +326,8 @@ async function refreshDashboard() {
         const state = await verifyToken(token, currentProvider, walletAddress);
         if (version !== operationVersion) return;
         tokenStates.set(token.id, state);
-      } catch {
-        tokenStates.set(token.id, { error: "Unexpected error while verifying this token on Sepolia. Refresh and retry." });
+      } catch (error) {
+        tokenStates.set(token.id, { error: `Verification error: ${errorMessage(error)}` });
       }
       renderTokenCards();
       updateTokenSelector();
