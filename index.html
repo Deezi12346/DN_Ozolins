@@ -3,56 +3,303 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Token Dashboard (Sepolia)</title>
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="description" content="A Sepolia-only student dashboard for classroom ERC-20 tokens." />
+  <title>Student Token Dashboard · Sepolia</title>
   <style>
-    :root { color-scheme: light dark; }
-    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
-    h1 { margin-bottom: .25rem; }
-    .sub { color: #666; margin-top: 0; }
-    button { padding: .6rem 1rem; font-size: 1rem; cursor: pointer; }
-    input, select { width: 100%; padding: .5rem; font-size: 1rem; box-sizing: border-box; margin: .25rem 0 .75rem; }
-    label { font-weight: 600; }
-    .warn { background: #fff3cd; color: #664d03; border: 1px solid #ffecb5; padding: .75rem; border-radius: 6px; margin: 1rem 0; }
-    .status { margin-top: 1rem; padding: .75rem; border-radius: 6px; }
-    .status.info { background: #e7f1ff; color: #084298; }
-    .status.ok { background: #d1e7dd; color: #0a3622; }
-    .status.error { background: #f8d7da; color: #58151c; }
-    .status:empty { display: none; }
-    code { word-break: break-all; }
-    ul { padding-left: 1.2rem; }
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0b1020;
+      color: #edf1fa;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      --surface: #121a2d;
+      --surface-raised: #172138;
+      --border: rgba(174, 190, 220, .14);
+      --muted: #9aa8c2;
+      --blue: #8fb4ff;
+      --gold: #f1c76e;
+      --silver: #b8d8ed;
+      --danger: #ff9a9a;
+      --success: #88e0bd;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 14% -10%, rgba(59, 94, 168, .22), transparent 42rem),
+        radial-gradient(ellipse at 100% 0%, rgba(105, 76, 143, .12), transparent 34rem),
+        #0b1020;
+    }
+    button, input, select { font: inherit; }
+    button, a, input, select { -webkit-tap-highlight-color: transparent; }
+    a { color: #a9c7ff; }
+    a:hover { color: #d2e1ff; }
+    button {
+      min-height: 44px;
+      padding: .68rem 1rem;
+      border: 1px solid rgba(166, 194, 255, .35);
+      border-radius: 12px;
+      background: linear-gradient(135deg, #3154a0, #243c75);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      transition: filter .15s ease, transform .15s ease, border-color .15s ease;
+    }
+    button:hover:not(:disabled) { filter: brightness(1.14); transform: translateY(-1px); }
+    button:disabled { cursor: not-allowed; opacity: .52; }
+    button.secondary {
+      background: rgba(255, 255, 255, .035);
+      border-color: var(--border);
+      color: #dce5f7;
+    }
+    button.small { min-height: 36px; padding: .45rem .75rem; font-size: .88rem; }
+    :focus-visible { outline: 3px solid #91baff; outline-offset: 3px; }
+    .shell { width: min(1120px, calc(100% - 36px)); margin: 0 auto; padding: 32px 0 52px; }
+    .topbar, .brand, .wallet-actions, .section-heading, .card-heading, .balance-row, .field-heading {
+      display: flex;
+      align-items: center;
+    }
+    .topbar { justify-content: space-between; gap: 20px; }
+    .brand { gap: 13px; }
+    .brand-mark {
+      display: grid;
+      width: 44px;
+      height: 44px;
+      place-items: center;
+      border: 1px solid rgba(143, 180, 255, .36);
+      border-radius: 14px;
+      background: linear-gradient(145deg, rgba(85, 122, 198, .28), rgba(32, 46, 79, .3));
+      color: #c5d8ff;
+      font-weight: 800;
+      letter-spacing: -.04em;
+    }
+    .eyebrow { margin: 0 0 4px; color: var(--muted); font-size: .73rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(1.1rem, 2.4vw, 1.45rem); letter-spacing: -.035em; }
+    .wallet-actions { gap: 10px; }
+    .wallet-id {
+      max-width: 230px;
+      overflow: hidden;
+      color: #c4d1e9;
+      font: .83rem ui-monospace, SFMono-Regular, Menlo, monospace;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .hero { padding: 58px 0 27px; }
+    .network-pill, .chain-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(126, 158, 221, .25);
+      border-radius: 999px;
+      background: rgba(41, 61, 101, .3);
+      color: #c6d7f7;
+      font-size: .84rem;
+      font-weight: 700;
+      padding: 7px 11px;
+    }
+    .dot { width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%; background: #8493ad; }
+    .dot.ok { background: #68dba9; box-shadow: 0 0 12px rgba(104, 219, 169, .55); }
+    .dot.error { background: #ff7777; }
+    .hero h2 { max-width: 720px; margin: 18px 0 10px; font-size: clamp(2rem, 5.4vw, 3.7rem); line-height: 1.06; letter-spacing: -.06em; }
+    .hero p { max-width: 680px; margin: 0; color: #a8b5cc; font-size: 1.03rem; line-height: 1.7; }
+    .safety {
+      display: flex;
+      gap: 14px;
+      margin: 21px 0 31px;
+      padding: 16px 18px;
+      border: 1px solid rgba(241, 199, 110, .28);
+      border-radius: 15px;
+      background: linear-gradient(100deg, rgba(130, 92, 31, .17), rgba(74, 64, 48, .11));
+      color: #ead8ac;
+      line-height: 1.6;
+    }
+    .safety strong { color: #ffe19a; }
+    .section-heading { justify-content: space-between; gap: 16px; margin: 34px 0 14px; }
+    .section-heading h2 { margin: 0; font-size: 1.22rem; letter-spacing: -.025em; }
+    .section-heading p { margin: 5px 0 0; color: var(--muted); font-size: .91rem; }
+    .token-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .card {
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 19px;
+      background: linear-gradient(145deg, rgba(23, 33, 56, .95), rgba(17, 25, 43, .96));
+      box-shadow: 0 20px 50px rgba(0, 0, 0, .14);
+    }
+    .token-card { position: relative; overflow: hidden; padding: 21px; }
+    .token-card::before { position: absolute; inset: 0 0 auto; height: 2px; background: var(--token-accent); content: ""; }
+    .token-card[data-token="dn"] { --token-accent: var(--gold); }
+    .token-card[data-token="study"] { --token-accent: var(--silver); }
+    .card-heading { justify-content: space-between; gap: 12px; }
+    .token-title { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    .token-icon { display: grid; width: 42px; height: 42px; flex: 0 0 42px; place-items: center; border: 1px solid color-mix(in srgb, var(--token-accent), transparent 60%); border-radius: 13px; background: color-mix(in srgb, var(--token-accent), transparent 91%); color: var(--token-accent); font-weight: 850; }
+    .token-title h3 { margin: 0; font-size: 1.04rem; }
+    .token-title p { margin: 3px 0 0; color: var(--muted); font-size: .82rem; }
+    .verification { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: .76rem; white-space: nowrap; }
+    .verification[data-state="verified"] { color: var(--success); }
+    .verification[data-state="error"] { color: var(--danger); }
+    .balance-label { margin: 24px 0 2px; color: var(--muted); font-size: .8rem; font-weight: 650; }
+    .balance-value { overflow-wrap: anywhere; font-size: clamp(1.55rem, 3vw, 2.15rem); font-weight: 760; letter-spacing: -.045em; }
+    .token-details { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 19px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .detail-label { display: block; margin-bottom: 4px; color: var(--muted); font-size: .75rem; }
+    .detail-value { overflow-wrap: anywhere; font-size: .88rem; font-weight: 650; }
+    .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; }
+    .card-foot a { font-size: .83rem; text-decoration: none; }
+    .muted { color: var(--muted); }
+    .transfer-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr); gap: 16px; align-items: start; }
+    .transfer-card, .explain-card { padding: 23px; }
+    .transfer-card h2, .explain-card h2 { margin: 0 0 5px; font-size: 1.15rem; }
+    .card-intro { margin: 0 0 22px; color: var(--muted); font-size: .9rem; line-height: 1.55; }
+    label { display: block; margin: 17px 0 7px; color: #dce5f7; font-size: .86rem; font-weight: 700; }
+    input, select {
+      width: 100%;
+      min-height: 46px;
+      padding: 11px 13px;
+      border: 1px solid rgba(174, 190, 220, .2);
+      border-radius: 11px;
+      background: #0e1628;
+      color: #f1f4fb;
+    }
+    input::placeholder { color: #697894; }
+    input:disabled, select:disabled { color: #8995aa; opacity: .65; }
+    .field-heading { justify-content: space-between; gap: 10px; }
+    .field-heading label { margin-bottom: 7px; }
+    .available { color: var(--muted); font-size: .78rem; }
+    .amount-wrap { display: flex; gap: 9px; }
+    .amount-wrap input { min-width: 0; }
+    .max-btn { min-height: 46px; }
+    .symbol-hint { margin: 7px 0 0; color: var(--muted); font-size: .79rem; }
+    .send-button { width: 100%; margin-top: 21px; }
+    .status {
+      min-height: 0;
+      margin-top: 17px;
+      padding: 0;
+      border-radius: 11px;
+      color: #c8d4e9;
+      font-size: .89rem;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+    .status:not(:empty) { padding: 12px 13px; border: 1px solid var(--border); background: rgba(255, 255, 255, .035); }
+    .status[data-kind="success"] { border-color: rgba(136, 224, 189, .28); color: var(--success); background: rgba(46, 117, 88, .12); }
+    .status[data-kind="error"] { border-color: rgba(255, 154, 154, .28); color: #ffb1b1; background: rgba(132, 48, 58, .13); }
+    .status[data-kind="warning"] { border-color: rgba(241, 199, 110, .28); color: #f1d99f; background: rgba(130, 92, 31, .12); }
+    .status a { display: inline-block; margin-left: 5px; }
+    .explain-card ul { margin: 18px 0 0; padding: 0; list-style: none; }
+    .explain-card li { position: relative; margin: 13px 0; padding-left: 19px; color: #b8c4d9; font-size: .88rem; line-height: 1.55; }
+    .explain-card li::before { position: absolute; left: 0; color: var(--blue); content: "•"; font-size: 1.2rem; line-height: 1.1; }
+    .chain-warning { display: none; margin-top: 14px; padding: 12px 14px; border: 1px solid rgba(255, 154, 154, .28); border-radius: 12px; background: rgba(132, 48, 58, .13); color: #ffb1b1; font-size: .88rem; }
+    .chain-warning.visible { display: block; }
+    footer { margin-top: 35px; padding-top: 18px; border-top: 1px solid var(--border); color: #8492aa; font-size: .8rem; line-height: 1.6; }
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 28px, 600px); padding-top: 20px; }
+      .topbar { align-items: flex-start; }
+      .wallet-actions { flex-direction: column; align-items: flex-end; }
+      .wallet-id { max-width: 175px; font-size: .74rem; }
+      .hero { padding-top: 42px; }
+      .token-grid, .transfer-layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 440px) {
+      .wallet-actions { gap: 6px; }
+      .wallet-actions button { padding-inline: .75rem; font-size: .84rem; }
+      .chain-state { font-size: .72rem; }
+      .token-card, .transfer-card, .explain-card { padding: 18px; }
+      .verification { font-size: .69rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
   </style>
 </head>
 <body>
-  <h1>Token Dashboard</h1>
-  <p class="sub">Ethereum Sepolia testnet only. Tokens have no real value.</p>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">ST</div>
+        <div>
+          <p class="eyebrow">Classroom Web3 project</p>
+          <h1>Student Token Dashboard</h1>
+        </div>
+      </div>
+      <div class="wallet-actions">
+        <span id="account" class="wallet-id" aria-live="polite">Wallet not connected</span>
+        <button id="copyBtn" class="secondary small" type="button" hidden>Copy address</button>
+        <button id="connectBtn" type="button">Connect Wallet</button>
+      </div>
+    </header>
 
-  <div class="warn">Use a dedicated test wallet on <strong>Sepolia (chain ID 11155111)</strong>. Never enter a seed phrase or private key on this page.</div>
-  <div id="netWarning" class="warn" hidden>Wrong network. Please switch MetaMask to Ethereum Sepolia.</div>
+    <section class="hero" aria-labelledby="hero-title">
+      <span class="network-pill"><span id="networkDot" class="dot"></span><span id="networkLabel">Ethereum Sepolia · Chain ID 11155111</span></span>
+      <h2 id="hero-title">Classroom rewards,<br />recorded on-chain.</h2>
+      <p>Check your balances and send verified classroom tokens directly from your wallet. No swaps, approvals, or monetary valuations.</p>
+    </section>
 
-  <button id="connectBtn">Connect Wallet</button>
-  <p>Wallet: <code id="account">not connected</code></p>
+    <aside class="safety" aria-label="Testnet safety notice">
+      <span aria-hidden="true">◆</span>
+      <div><strong>Sepolia testnet only.</strong> This dashboard blocks transfers on every other network. DN and STUDY are educational test assets with no guaranteed monetary value. Transfers require SepoliaETH for gas.</div>
+    </aside>
+    <div id="networkWarning" class="chain-warning" role="alert">Wrong network. Switch your wallet to Ethereum Sepolia (chain ID 11155111) before using token balances or transfers.</div>
 
-  <div id="app" hidden>
-    <h2>Balances</h2>
-    <ul id="balances"></ul>
+    <section aria-labelledby="balances-heading">
+      <div class="section-heading">
+        <div>
+          <h2 id="balances-heading">Your tokens</h2>
+          <p>Live contract reads. No simulated balances or prices.</p>
+        </div>
+        <button id="refreshBtn" class="secondary small" type="button">Refresh</button>
+      </div>
+      <div id="tokenCards" class="token-grid" aria-live="polite"></div>
+    </section>
 
-    <h2>Send tokens</h2>
-    <form id="sendForm">
-      <label for="tokenSelect">Token</label>
-      <select id="tokenSelect"></select>
+    <section class="section-heading" aria-labelledby="transfer-heading">
+      <div>
+        <h2 id="transfer-heading">Send tokens</h2>
+        <p>Transactions are sent only after wallet confirmation.</p>
+      </div>
+    </section>
+    <div class="transfer-layout">
+      <form id="sendForm" class="card transfer-card" novalidate>
+        <h2>Transfer</h2>
+        <p class="card-intro">Choose a verified token, recipient, and amount. Confirm the ERC-20 transfer in your wallet.</p>
+        <label for="tokenSelect">Token</label>
+        <select id="tokenSelect" disabled>
+          <option value="">Connect wallet to verify tokens</option>
+        </select>
+        <label for="recipient">Destination wallet</label>
+        <input id="recipient" type="text" placeholder="0x..." autocomplete="off" spellcheck="false" inputmode="text" />
+        <div class="field-heading">
+          <label for="amount">Amount</label>
+          <span id="availableBalance" class="available">Available: —</span>
+        </div>
+        <div class="amount-wrap">
+          <input id="amount" type="text" placeholder="0.00" autocomplete="off" spellcheck="false" inputmode="decimal" />
+          <button id="maxBtn" class="secondary max-btn" type="button" disabled>MAX</button>
+        </div>
+        <p id="symbolHint" class="symbol-hint">Select a verified token to see its symbol and balance.</p>
+        <button id="sendBtn" class="send-button" type="submit" disabled>Send Tokens</button>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+      </form>
 
-      <label for="recipient">Destination wallet</label>
-      <input id="recipient" placeholder="0x..." autocomplete="off" />
+      <aside class="card explain-card">
+        <h2>About classroom tokens</h2>
+        <ul>
+          <li><strong>DN</strong> is for scarce, special achievements and premium rewards.</li>
+          <li><strong>STUDY</strong> is intended for everyday participation, quizzes, and attendance.</li>
+          <li>Both are educational test tokens. ERC-20 balances and transfers are recorded on-chain.</li>
+          <li>Network gas is paid in SepoliaETH, not by sending DN or STUDY.</li>
+          <li>Confirmed token transfers may be irreversible. Check the destination and amount carefully.</li>
+        </ul>
+      </aside>
+    </div>
 
-      <label for="amount">Amount</label>
-      <input id="amount" inputmode="decimal" placeholder="e.g. 10" autocomplete="off" />
-
-      <button id="sendBtn" type="submit">Send</button>
-    </form>
-  </div>
-
-  <div id="status" class="status" role="status"></div>
-
+    <footer>
+      Educational demonstration on Ethereum Sepolia. Never enter a private key or seed phrase on this page.
+      <a href="https://sepolia.etherscan.io/" target="_blank" rel="noopener noreferrer">Open Sepolia Etherscan</a>.
+    </footer>
+  </main>
   <script type="module" src="app.js"></script>
 </body>
 </html>
