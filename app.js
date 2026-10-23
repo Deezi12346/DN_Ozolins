@@ -16,8 +16,8 @@ const TOKENS = [
   {
     id: "study",
     name: "Study Points",
-    symbol: "STUDY",
-    address: "0xd9145CCE52D386f254917e481eB44e9943F39138",
+    symbol: "SP",
+    address: "0x60d73B9e259A544eC98f1dB5B0417003CE6Cf4f4",
     expectedSupply: 1_000_000n,
   },
 ];
@@ -222,13 +222,24 @@ async function requestSepoliaSwitch() {
   }
 }
 
+function isRpcError(error) {
+  const code = error?.code ?? error?.info?.error?.code;
+  return ["NETWORK_ERROR", "SERVER_ERROR", "TIMEOUT", "UNKNOWN_ERROR", "ECONNRESET", "ECONNREFUSED"].includes(code)
+    || (typeof code === "number" && code <= -32000);
+}
+
 async function verifyToken(token, currentProvider, walletAddress) {
   if (!ethers.isAddress(token.address)) {
-    return { error: "Contract address is not configured or is invalid." };
+    return { error: "Configuration error: the contract address is missing or invalid." };
   }
 
-  const bytecode = await currentProvider.getCode(token.address);
-  if (bytecode === "0x") {
+  let bytecode;
+  try {
+    bytecode = await currentProvider.getCode(token.address);
+  } catch {
+    return { error: "RPC error while checking contract code on Sepolia. Check your connection and retry." };
+  }
+  if (!bytecode || /^0x0*$/i.test(bytecode)) {
     return { error: "No contract code exists at this address on Sepolia." };
   }
 
@@ -246,8 +257,13 @@ async function verifyToken(token, currentProvider, walletAddress) {
       contract.totalSupply(),
       contract.balanceOf(walletAddress),
     ]);
-  } catch {
-    return { error: "The contract does not respond to the required ERC-20 reads." };
+  } catch (error) {
+    if (isRpcError(error)) {
+      return { error: "RPC error while reading ERC-20 data on Sepolia. Check your connection and retry." };
+    }
+    return {
+      error: "ERC-20 read error: contract code exists, but metadata, total supply, or this wallet's balance could not be read.",
+    };
   }
 
   const expectedRawSupply = token.expectedSupply * (10n ** BigInt(EXPECTED_DECIMALS));
@@ -305,7 +321,7 @@ async function refreshDashboard() {
         if (version !== operationVersion) return;
         tokenStates.set(token.id, state);
       } catch {
-        tokenStates.set(token.id, { error: "Could not read this contract from Sepolia. Check your connection and retry." });
+        tokenStates.set(token.id, { error: "Unexpected error while verifying this token on Sepolia. Refresh and retry." });
       }
       renderTokenCards();
       updateTokenSelector();

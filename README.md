@@ -6,7 +6,7 @@ A lightweight static dashboard for connecting a wallet, checking classroom ERC-2
 - **Repository:** https://github.com/Deezi12346/DN_Ozolins
 - **Explorer:** https://sepolia.etherscan.io/
 
-DN and STUDY are educational test assets and have no guaranteed monetary value. The dashboard does not show fiat prices, make swaps, or request approvals. Transfers require SepoliaETH for gas and may be irreversible after confirmation.
+DN and Study Points (SP) are educational test assets and have no guaranteed monetary value. The dashboard does not show fiat prices, make swaps, or request approvals. Transfers require SepoliaETH for gas and may be irreversible after confirmation.
 
 ## Project overview
 
@@ -17,29 +17,30 @@ The project demonstrates how a browser wallet can read ERC-20 metadata and balan
 | [`index.html`](./index.html) | Responsive dashboard markup and styling |
 | [`app.js`](./app.js) | Wallet, Sepolia, ERC-20 verification, balance, and transfer logic |
 | [`contracts/Deeznats.sol`](./contracts/Deeznats.sol) | DN token source |
-| [`contracts/StudyPoints.sol`](./contracts/StudyPoints.sol) | Proposed fixed-supply STUDY token source; not evidence of deployment |
+| [`contracts/StudyPoints.sol`](./contracts/StudyPoints.sol) | Local source draft declares `STUDY`; it has not been verified as the deployed source |
 
 ## Token economics and deployment status
 
-The two tokens have different classroom roles and supplies. **DN** represents scarce, special achievements and premium rewards. **STUDY** is intended for more frequent rewards such as participation, quizzes, and attendance. Separating the tokens makes those reward categories and their intended scarcity visible without assigning either token a monetary value.
+The two tokens have different classroom roles and supplies. **DN** represents scarce, special achievements and premium rewards. **Study Points (SP)** is intended for more frequent rewards such as participation, quizzes, and attendance. Separating the tokens makes those reward categories and their intended scarcity visible without assigning either token a monetary value.
 
-On-chain values below were queried from public Ethereum Sepolia JSON-RPC endpoints on 2026-10-23. DN metadata and supply were read from Sepolia; the STUDY no-code result was independently observed on two RPC endpoints. The dashboard independently checks code and expected metadata at runtime. An RPC observation is not proof that deployed bytecode was compiled from the local source.
+On-chain values below were queried from public Ethereum Sepolia JSON-RPC endpoints on 2026-10-23. One endpoint reported chain ID `0xaa36a7` (11155111) and returned the contract code and listed metadata and supply for the configured Study Points address. A second endpoint independently confirmed the name and symbol. The deployed symbol is `SP`; the dashboard now checks that actual symbol and the other expected metadata at runtime. An RPC observation is not proof that deployed bytecode was compiled from the local source.
 
-| Property | Deeznats (DN) | Study Points (STUDY) |
+| Property | Deeznats (DN) | Study Points (SP) |
 |---|---|---|
 | Purpose | Rare achievements and premium rewards | Everyday participation and basic rewards |
-| Configured Sepolia address | [`0x991C9ad3c61281714b16F3713Cf8def01b3133cE`](https://sepolia.etherscan.io/address/0x991C9ad3c61281714b16F3713Cf8def01b3133cE) | [`0xd9145CCE52D386f254917e481eB44e9943F39138`](https://sepolia.etherscan.io/address/0xd9145CCE52D386f254917e481eB44e9943F39138) |
-| On-chain contract code | **Verified present** | **Not found** at the configured address in the RPC query |
-| On-chain name / symbol | `Deeznats` / `DN` | **Unavailable**: address returned no code |
-| On-chain decimals | `18` | **Unavailable** |
-| On-chain total supply | `100,000 DN` | **Unavailable; not verified** |
-| Expected initial supply | `100,000 DN` | `1,000,000 STUDY` |
+| Configured Sepolia address | [`0x991C9ad3c61281714b16F3713Cf8def01b3133cE`](https://sepolia.etherscan.io/address/0x991C9ad3c61281714b16F3713Cf8def01b3133cE) | [`0x60d73B9e259A544eC98f1dB5B0417003CE6Cf4f4`](https://sepolia.etherscan.io/address/0x60d73B9e259A544eC98f1dB5B0417003CE6Cf4f4) |
+| On-chain contract code | **Verified present** | **Verified present** |
+| On-chain name / symbol | `Deeznats` / `DN` | `Study Points` / `SP` |
+| On-chain decimals | `18` | `18` |
+| On-chain total supply | `100,000 DN` | `1,000,000 SP` |
+| Expected initial supply | `100,000 DN` | `1,000,000 SP` |
 | Local contract source | [`contracts/Deeznats.sol`](./contracts/Deeznats.sol) | [`contracts/StudyPoints.sol`](./contracts/StudyPoints.sol) |
-| Deployment / source verification | Deployment observed; local-source match and explorer source verification not established | **Not deployed or verified by this project** |
+| Dashboard verification | Matches configured metadata | Configured metadata matches the observed on-chain values |
+| Deployment / source verification | Deployment observed; local-source match and explorer source verification not established | Deployment and listed metadata observed by RPC; local-source match and explorer source verification not established |
 
 The DN source sets `Deeznats` / `DN` and mints 100,000 tokens once in the constructor. It inherits the OpenZeppelin ERC-20 18-decimal default and has no public mint function. The deployed contract returned the matching name, symbol, decimals, and total supply. This RPC metadata check does not prove the deployed bytecode matches the local source.
 
-The supplied STUDY address returned `0x` for `eth_getCode` on the queried Sepolia RPC endpoint, so its ERC-20 metadata and supply could not be read. The dashboard therefore reports the exact unavailable status and disables STUDY operations while allowing a separately verified token to work. `StudyPoints.sol` is only a local source proposal; creating it did not deploy a contract or make the configured address valid. No replacement address has been invented.
+The configured Study Points address returned non-empty bytecode on Sepolia. Direct `eth_call` reads on one public RPC endpoint returned `Study Points`, `SP`, `18`, and a raw total supply of `1000000000000000000000000` (1,000,000 SP); a second endpoint independently returned the same name and symbol. These values match the dashboard configuration. The connected wallet's balance is account-specific; the dashboard reads `balanceOf(connectedWallet)` after the user connects a wallet on Sepolia. That wallet-specific read and live wallet behavior have not been manually tested in this environment.
 
 ## Technology and network
 
@@ -66,7 +67,7 @@ The supplied STUDY address returned `0x` for `eth_getCode` on the queried Sepoli
 
 ### Import a token into MetaMask
 
-In MetaMask's token/asset view, choose **Import tokens** and paste the contract address from the table above. Confirm the displayed token details before importing. The STUDY address is currently unverified and has no code according to the RPC query, so do not treat importing that address as evidence that STUDY exists.
+In MetaMask's token/asset view, choose **Import tokens** and paste the contract address from the table above. Confirm the displayed token details before importing.
 
 ### Inspect contracts and transfers
 
@@ -89,28 +90,29 @@ Open the token address on [Sepolia Etherscan](https://sepolia.etherscan.io/) to 
 |---|---|
 | DN address contains code on Sepolia | **Verified** by public Sepolia RPC query |
 | DN name, symbol, decimals, and total supply | **Verified** as `Deeznats`, `DN`, `18`, and `100,000 DN` by RPC query |
-| STUDY address contains code on Sepolia | **Not verified**: queried endpoint returned `0x` |
-| STUDY metadata, supply, and wallet balance | **Blocked** until deployed code exists at the configured address |
+| Study Points address contains code on Sepolia | **Verified present** by public Sepolia RPC query |
+| Study Points name, symbol, decimals, and total supply | **Verified** as `Study Points`, `SP`, `18`, and `1,000,000 SP` by direct Sepolia RPC reads |
+| Study Points connected-wallet balance | Queried dynamically with `balanceOf(connectedWallet)` when a wallet connects on Sepolia; not manually tested here |
 | JavaScript syntax | **Passed** with Node.js module syntax check |
 | Static HTML-to-JavaScript ID references | **Passed**: no missing or duplicate IDs among the checked references |
 | Unsafe HTML insertion | **Passed**: no `innerHTML` usage in the app |
 | Git whitespace check | **Passed** with `git diff --check` |
 | Static HTTP serving | **Passed**: dashboard, app module, and both Solidity source paths returned HTTP 200 locally |
 | Solidity compilation | **Pending**: no `solc` compiler or contract build configuration is available in this repository environment |
-| Live MetaMask, transfer, cancellation, and balance-change tests | **Pending manual testing**; these require a wallet, funded test account, and a verified STUDY deployment for STUDY transfers |
+| Live MetaMask, transfer, cancellation, and balance-change tests | **Pending manual testing**; these require a connected wallet, funded test account, and wallet confirmation |
 | Responsive layout and browser console | **Pending manual browser testing** |
 | Screenshots and transfer evidence for submission | **Pending**; no screenshots, wallet addresses, or transaction hashes are claimed here |
 
 Manual wallet test checklist:
 
 - Connect on Sepolia and confirm the connected address and DN balance match Sepolia Etherscan.
-- Confirm STUDY shows an unavailable verification error and does not appear as a sendable token while its address has no code.
+- Confirm DN and Study Points (SP) metadata and balances load for the connected wallet, and both are selectable after passing verification.
 - Switch to another network and confirm the warning appears and transfers are blocked; switch back and refresh.
 - Try an empty or malformed recipient, malformed amount, zero/negative amount, excess precision, and an amount above the live balance. Invalid input must be rejected before a wallet signature request.
 - Test a small DN transfer only with an intended recipient and sufficient SepoliaETH. Confirm submission and then receipt on Sepolia Etherscan; refresh and compare balances.
 - Reject a MetaMask confirmation and confirm the dashboard does not report success.
 - Reload the page and check that displayed balances are freshly read from chain.
-- If STUDY is deployed later, verify its address, code, metadata, and supply before testing a STUDY transfer.
+- Test a Study Points (SP) transfer only with an intended recipient, sufficient token balance, and sufficient SepoliaETH; confirm the receipt on Sepolia Etherscan.
 
 ## Deployment and remaining work
 
@@ -118,7 +120,6 @@ The dashboard is intended for GitHub Pages configured to deploy the `main` branc
 
 Before final submission:
 
-- Deploy STUDY only if the assignment requires it, then independently verify its address and on-chain metadata; update the configured address only with an actual deployment address and evidence.
 - Complete the manual browser and wallet checks above.
 - Add genuine screenshots, transfer transaction hashes, and deployment/source-verification evidence where required by the instructor.
 - Confirm GitHub Pages has republished the updated root-site files.
